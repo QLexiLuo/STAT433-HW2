@@ -1,0 +1,59 @@
+---
+title: "README"
+author: "Lexi Luo"
+date: "9/27/2021"
+output: github_document
+---
+https://github.com/QLexiLuo/STAT433-HW2
+
+## STAT433 HW2
+
+```{r}
+library(dplyr)
+library(nycflights13)
+library(ggplot2)
+library(lubridate)
+```
+
+
+
+### Question 1
+How many flights have a missing dep_time? What other variables are missing? What might these rows represent?
+
+```{r}
+cancel = filter(flights, is.na(dep_time))
+summary(cancel)
+```
+8255 flights have a missing dep_time. dep_delay, arr_time, arr_delay,and air_time are missing. These rows represent canceled flights.
+
+
+### Question 2
+Currently dep_time and sched_dep_time are convenient to look at, but hard to compute with because they’re not really continuous numbers. Convert them to a more convenient representation of number of minutes since midnight.
+
+```{r}
+new_flights = mutate(flights,dep_time = (dep_time %/% 100) * 60 + (dep_time %% 100),
+       sched_dep_time = (sched_dep_time %/% 100) * 60 + (sched_dep_time %% 100))
+
+head(new_flights)
+```
+
+
+### Question 3
+Look at the number of canceled flights per day. Is there a pattern? Is the proportion of canceled flights related to the average delay? Use multiple dyplr operations, all on one line, concluding with ggplot(aes(x= ,y=)) + geom_point()
+
+```{r}
+flights %>%
+  mutate(dep_date = make_datetime(year, month, day)) %>%
+  group_by(dep_date) %>%
+  summarise(cancelled = sum(is.na(dep_delay)), 
+            n = n(),
+            average_dep_delay = mean(dep_delay,na.rm=TRUE),
+            average_arr_delay = mean(arr_delay,na.rm=TRUE)) %>%
+    ggplot(aes(x= cancelled/n)) + 
+    geom_point(aes(y=average_dep_delay), color='blue', alpha=0.5) + 
+    geom_point(aes(y=average_arr_delay), color='green', alpha=0.5) + 
+    ylab('Average delay per day (minutes)') +
+    xlab('Proportion of cancelled flights per day')
+```
+
+There seems to be a positive relationship between the proportion of cancelled flights per day to the average delay time per day. The higher the proportion of cancelled flights per day, the higher average delay per day in minutes.
